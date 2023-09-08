@@ -1,0 +1,194 @@
+### Question 0
+
+*  Draw a concepts diagram that uses all the following Github terminology 
+   * Include any missing keywords that will simplify the concepts diagrams 
+
+
+`Push`, `Repository`, `Clone`, `Pull`, `Pull Request`, `Branch`, `Merging`, `Github Client`, `README file`, `Private or Public`
+
+[GitHub Concept Diagram](https://docs.google.com/presentation/d/15GAjEJdCxWzjh8ICHS-V4zBd09-5mCXu6zmlgOgTDPE/edit?usp=sharing)
+
+
+#### Question 1
+
+`matrix(c(1,2,3,4,5,6) , nrow = 3)`
+
+* Running the expression produces the following matrix
+
+|  |  |
+|---|---|
+| 1 | 4 |
+| 2 | 5 |
+| 3 | 6 |
+
+* How can you modify the call to `matrix()` to produce the following matrix instead?
+
+|   | col_1 |  col_2 |
+| --- |---|---|
+| row_1 | 1 | 2 |
+| row_2 | 3 | 4 |
+| row_3 | 5 | 6 |
+
+* Note that you need to name the columns (col_1 and col_2) and name the rows (row_1, row_2, row_3)
+
+Hint: Use the `?` symbol to invoke the matrix documentation
+
+```{r}
+# create matrix, sort values row-wise
+mod_mat <- matrix(c(1, 2, 3, 4, 5, 6), nrow = 3, byrow = TRUE)
+
+# add labels
+colnames(mod_mat) <- c("col_1", "col_2")
+rownames(mod_mat) <- c("row_1", "row_2", "row_3")
+
+# print
+mod_mat
+```
+
+
+#### Question 2
+
+* Load then sort the air quality data frame on its `Temp` and `Solar.R` columns in reverse order (largest to smallest values)
+  * The function to sort a data frame is called order
+* Display only the first 15 lines of your table
+
+
+```{r}
+# load data from set airquality
+data("airquality")
+
+# extract index values for columns `Temp` and `Solar.R` & sort into decreasing order
+sort_temp_dec <- airquality$Temp[order(-airquality$Temp)]
+sort_solar.r_dec <- airquality$Solar.R[order(-airquality$Solar.R)]
+
+# create new matrix of ordered values in airquality
+df_sort_temp_solar.r <- data.frame(airquality$Ozone, sort_solar.r_dec, airquality$Wind, sort_temp_dec, airquality$Month, airquality$Day)
+
+# re-name columns 
+names(df_sort_temp_solar.r)[1] <- "Ozone"
+names(df_sort_temp_solar.r)[2] <- "Dec. Solar.R"
+names(df_sort_temp_solar.r)[3] <- "Wind"
+names(df_sort_temp_solar.r)[4] <- "Dec. Temp"
+names(df_sort_temp_solar.r)[5] <- "Month"
+names(df_sort_temp_solar.r)[6] <- "Day"
+
+# print first 15 lines
+head(df_sort_temp_solar.r, n = 15)
+```
+
+
+#### Question 3
+
+* Sort the airquality data frame on its `Temp` in decreasing order and `Solar.R` in increasing order
+* Display only the first 15 lines of your table
+
+```{r}
+# extract index values for column `Solar.R` & sort into increasing order
+sort_solar.r_inc <- airquality$Solar.R[order(airquality$Solar.R)]
+
+# create new matrix of ordered values in airquality
+df_sort_temp_solar.r_inc <- data.frame(airquality$Ozone, sort_solar.r_inc, airquality$Wind, sort_temp_dec, airquality$Month, airquality$Day)
+
+# re-name columns 
+names(df_sort_temp_solar.r_inc)[1] <- "Ozone"
+names(df_sort_temp_solar.r_inc)[2] <- "Inc. Solar.R"
+names(df_sort_temp_solar.r_inc)[3] <- "Wind"
+names(df_sort_temp_solar.r_inc)[4] <- "Dec. Temp"
+names(df_sort_temp_solar.r_inc)[5] <- "Month"
+names(df_sort_temp_solar.r_inc)[6] <- "Day"
+
+# print first 15 lines
+head(df_sort_temp_solar.r_inc, n = 15)
+```
+
+
+#### Question 4
+
+* There are various ways to select a subset of observations from a data frame.
+
+* Consult your [R Reference Card](https://cran.r-project.org/doc/contrib/Baggott-refcard-v2.pdf), see `Data Selection and Manipulation` section.
+  * What operations can you use to select all observations where the temperature is 72. Give at least two different answers to this question
+
+(1) Boolean Scanning Method 
+```{r}
+# create boolean expression to index Temp data that contains 72 degrees, print result
+temp72_a <- airquality[airquality$Temp == 72, ]
+
+# print
+temp72_a
+```
+
+
+(2) Using Function is.element()
+```{r}
+# using function to sort through Temp data column
+temp72_b <- airquality[is.element(airquality$Temp, c('72')), ]
+
+#print
+temp72_b
+```
+
+#### Question 6
+
+* You may have noticed when working with the `airqulity` data that some values show as `NA`
+ * `NA` stands for not available, or missing values.
+* A major part of data wrangling consists of cleaning missing values by either:
+  * Dropping the lines that have missing values
+   * Sometimes we can drop the column with missing values if the column is made of predominantly missing values
+  * Imputing the missing values, which uses educated guesses (or more complex algorithms) to fill the missing values
+  
+* Find and remove all rows that are missing values for the `Solar.R` or `Ozone` variables
+* Save the cleaned data to a new data frame called airquality_no_na
+  * How many lines have been removed?
+
+```{r}
+# remove rows containing NA using na.omit() function and boolean statement
+airquality_no_na <- na.omit(
+  airquality[airquality$Solar.R != 'NA' & airquality$Ozone != 'NA', ]
+  )
+
+# print new data frame
+head(airquality_no_na, n = 10)
+
+# compute difference in dataframe row length
+lines_removed <- nrow(airquality) - nrow(airquality_no_na)
+
+# print number of lines removed
+lines_removed
+```
+
+
+#### Question 7
+* Let's use a different strategy and impute the missing value.
+  * replace the missing values for Solar.R using that month's average.
+  * Example:
+    * The missing value for line 6 should be replaced with the average for month 5.
+    * The missing value for line 97 should be replaced with the average for month 8.
+
+```{r}
+# save new test data frame, donʻt want to mess up airquality df
+test_df <- airquality 
+
+# writing a function to impute the mean by month
+impute_mean <- function(x) {
+  
+  month_rows <- test_df[test_df$Month == x, ] 
+  get_mean <- mean(month_rows$Solar.R, na.rm = TRUE) 
+  month_rows[["Solar.R"]][is.na(month_rows[["Solar.R"]])] <- get_mean
+  print(month_rows)
+  
+}
+
+# iterate through each month on data set
+may_avg <- impute_mean(x = 5)
+june_avg <- impute_mean(x = 6)
+july_avg <- impute_mean(x = 7)
+august_avg <- impute_mean(x = 8)
+september_avg <- impute_mean(x = 9)
+
+# combine averages into concatinated data frame
+impute_df <- rbind(may_avg, june_avg, july_avg, august_avg, september_avg)
+impute_df
+
+```
+
