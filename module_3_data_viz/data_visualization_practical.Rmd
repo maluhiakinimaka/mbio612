@@ -1,0 +1,187 @@
+---
+title: "Data Visualization - Practical 3"
+author: Maluhia Stark-Kinimaka
+---
+
+**RMD Workspace Setup**
+```{r}
+library(ggplot2)
+```
+
+**Question 1**
+
+* Provide at least two methods to view the number of rows and the number of columns in the `mpg` dataset.
+
+```{r}
+# importing the data set as a df because i prefer to view/manipulate 
+# the data this way, also i wonʻt accidentally modify the original data set
+mpg_df <- data.frame(mpg)
+
+# method 1 - using (# of rows) & (# of columns) function in R
+total_row_a <- nrow(mpg_df)
+total_col_a <- ncol(mpg_df)
+
+# method 2 - using Rʻs dim() function and indexing vertices
+dim_mpg_df <- dim(mpg_df)
+total_row_b <- dim_mpg_df[1]
+total_col_b <- dim_mpg_df[2]
+```
+
+**Question 2**
+
+* Execute the following code:
+
+```{r}
+ggplot(data = mpg) +
+  geom_point(mapping = aes(x = displ, y = hwy, color = "blue"))
+```
+
+* Identify the issue with the code.
+* Correct it so that the plot displays as intended.
+
+*The problem with the code above is that the color was included within the aes(), or "aesthetic mapping", function input. Therefore, instead of simply assigning the color as an attribute of the data set, R accepted the input of color to represent a third variable. This subsequently plotted all the points in the hwy vs. displ data set to represent the third variable "blue" that was accidentally created as a result of mistaken syntax. Moving the color specification outside of the aes() function quickly solves the problem.*
+
+```{r}
+# correcting code so color is noted outside the aes() function
+ggplot(data = mpg) +
+  geom_point(mapping = aes(x = displ, y = hwy), color = "blue")
+```
+
+**Question 3**
+
+Create a `facet grid` to explore how the relationships between `displ` and `hwy` differ among vehicle classes and drive configurations.
+
+To create the facet grid, use the `facet_grid()` function in ggplot2. 
+The tilde (~) symbol inside the function specifies which variable is a function of the other. For example, facet_grid(x ~ y) will generate subplots where x varies by row of the facet and y varies by column of the facet.
+
+
+```{r}
+ggplot(mpg_df, aes(x = displ, y = hwy)) + 
+  geom_point() +
+  facet_grid(drv ~ class) +   #facet grid function
+  xlab("Displacement") +
+  ylab("Highway MPG") +
+  labs(
+    title = "Vehicle Displacement and Highway MPG",
+    subtitle = "Sorted by Class and Drive Configuration")
+```
+
+**Question 4**
+
+* Create a scatter plot for the variables `cty` (x-axis) and `hwy` (y-axis) from the `mpg` dataset.
+* Add a geom to show the linear regression between x and y.
+    * Use a linear model (`lm`) instead of the default (`loess`) for computing the regression.
+    * Set the line color to `red`.
+    * Color the points by `class`.
+    * Set the point size to 6.
+
+```{r}
+ggplot(mpg_df, aes(x = cty, y = hwy, color = class)) +
+  geom_point(size = 6) +
+  geom_smooth(method = "lm", color = "red") +
+  xlab("City MPG") +
+  ylab("Highway MPG") +
+  labs(title = "Fuel Efficiency by Vehicle Class")
+```
+
+**Question 5**
+
+* In the previous plot, you noticed subcompacts with a city fuel consumption of 15 miles per gallon.
+* Extract only the manufacturer and model of these subcompacts.
+
+```{r}
+# sort mpg_df to return rows containing "subcompact" and "15"
+subcompact_15 <- mpg_df[mpg_df$class == "subcompact" & mpg_df$cty == "15", ]
+
+# create new df, extracting only the manufacturer & model for each sorted subcompact
+man_model_subcompact_15 <- data.frame(subcompact_15$manufacturer, subcompact_15$model)
+colnames(man_model_subcompact_15) <- c("manufacturer", "model")
+
+# print new df
+head(man_model_subcompact_15)
+```
+
+**Question 6**
+
+* The following code generates a warning:
+
+```{r}
+    ggplot(data = mpg) + 
+      geom_point(mapping = aes(x = displ, y = hwy, shape = class))
+```
+
+* Correct the code so all classes are displayed.
+    * Hint: You can manually specify shapes using the `scale_shape_manual` geom.
+
+```{r}
+# specify number of classes with a vector 1-7 in scale_shape_manual() to create 7th shape
+ggplot(mpg_df) + 
+  geom_point(mapping = aes(x = displ, y = hwy, shape = class)) +
+  scale_shape_manual(values = 1:7) 
+```
+
+**Question 7**
+
+* Given the following two vectors:
+
+```{r}
+size <- c(3.385,0.48,1.35,465,36.33,27.66,14.83,1.04,4.19,0.425,0.101,0.92,1,0.005,0.06,3.5,2,1.7,2547,0.023,187.1,521,0.785,10,3.3,0.2,1.41,529,207,85,0.75,62,6654,3.5,6.8,35,4.05,0.12,0.023,0.01,1.4,250,2.5,55.5,100,52.16,10.55,0.55,60,3.6,4.288,0.28,0.075,0.122,0.048,192,3,160,0.9,1.62,0.104,4.235)
+mass <- c(44.5,15.5,8.1,423,119.5,115,98.2,5.5,58,6.4,4,5.7,6.6,0.14,1,10.8,12.3,6.3,4603,0.3,419,655,3.5,115,25.6,5,17.5,680,406,325,12.3,1320,5712,3.9,179,56,17,1,0.4,0.25,12.5,490,12.1,175,157,440,179.5,2.4,81,21,39.2,1.9,1.2,3,0.33,180,25,169,2.6,11.4,2.5,50.4)
+```
+
+* Combine the two vectors into a data frame called `sizeMass`.
+    * Name the columns as `size` and `mass` respectively.
+
+```{r}
+sizeMass <- data.frame(size, mass)
+```
+
+* Use the code below to plot the data.
+
+```{r}
+ggplot(sizeMass, aes(size, mass)) +
+  geom_point() +
+  geom_smooth(method = "lm", color = "red", se = FALSE) 
+```
+
+
+**Question 8**
+
+* Transform the data in the plot to mitigate the "squashed" appearance.
+
+1. Add two new columns named `size_log10` and `mass_log10` containing the log10 values of `size` and `mass`, respectively. Then use these new columns for plotting.
+
+```{r}
+# apply log10 function to data set, store as new variable
+size_log10 <- log10(sizeMass$size)
+mass_log10 <- log10(sizeMass$mass)
+
+# append new columns to sizeMass
+sizeMass <- data.frame(size, mass, size_log10, mass_log10)
+head(sizeMass, n = 2) #check
+
+# plot new scatter
+ggplot(sizeMass, aes(size_log10, mass_log10)) +
+  geom_point() +
+  geom_smooth(method = "lm", color = "red", se = FALSE) +
+  xlab("log10(Size)") +
+  ylab("log10(Mass)") +
+  labs(
+    title = "Plotting Size vs. Mass", 
+    subtitle = "Method 1")
+```
+
+2. Use `scale_x_log10()` and `scale_y_log10()` to set different scales for the x and y aesthetics.
+
+```{r}
+ggplot(sizeMass, aes(size, mass)) +
+  geom_point() +
+  scale_x_log10() +
+  scale_y_log10() +
+  geom_smooth(method = "lm", color = "red", se = FALSE) +
+  xlab("log10(Size)") +
+  ylab("log10(Mass)") +
+  labs(
+    title = "Plotting Size vs. Mass", 
+    subtitle = "Method 2")
+```
