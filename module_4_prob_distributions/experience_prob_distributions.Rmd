@@ -1,0 +1,170 @@
+### Q0: Sampling and Distribution
+
+You are studying the population of a specific type of marine algae in different locations. Assume the algal density is normally distributed. You take samples from two locations (Location A and Location B) to compare the algae populations. Generate synthetic data to represent the algal density (individuals per square meter) at these two locations. Assume a mean density of 200 and 220 individuals/m^2 with a common standard deviation of 20 individuals/m^2 for both locations, with 50 samples from each location.
+
+
+```{r}
+# define experiment parameters
+mean_a <- 200
+mean_b <- 220
+sd_a <- 20
+sd_b <- 20
+n1 = 50
+
+# set the seed to make random processes reproducible
+set.seed(1)
+
+# generate random data at population a & b - normal distribution
+pop_a <- rnorm(n1, mean = mean_a, sd = sd_a)
+pop_b <- rnorm(n1, mean = mean_b, sd = sd_b)
+```
+
+### Q1: Data Cleaning
+
+Check your dataset for any outliers. 
+
+```{r}
+# define 1x2 grid for plotting
+par(mfrow = c(1, 2))
+
+# plot histogram, identify outliers
+hist_a <- hist(pop_a,
+               main = "Population A",
+               xlab = "Algal Density (#/m^2)",
+               ylab = "Frequency",
+               col = "lightgreen",
+               border = "black")
+
+hist_b <- hist(pop_b,
+               main = "Population B",
+               xlab = "Algal Density (#/m^2)",
+               ylab = "Frequency",
+               col = "lightblue",
+               border = "black")
+```
+
+**When viewing the outcome of random normal sampling side-by-side, the outlier data will be at the lower and upper boundaries of Algal Density for each histrogram. Each time this document is knitted, the rnorm() function will "re-shuffle" n new data selections (in this case n = 50). However, I have added the set.seed() function so the random shuffle is re-producible for homework checking purposes.**
+
+**Outliers Population A - Low Density = 155.7060 **
+
+**Outliers Population B - High Density = 263.4522, 268.0324**
+
+```{r}
+# reset plotting layout
+par(mfrow = c(1, 1))
+```
+
+
+### Q2: Visualization and Kernel Density Estimation (KDE)
+
+Plot a Kernel Density Estimation (geom_density plot) to visualize the distribution of algal densities at both locations. 
+
+```{r}
+# import library
+library(ggplot2)
+
+# convert pop_a & pop_b into df so geom_density() will run
+df_pop_a <- data.frame(pop_a)
+df_pop_b <- data.frame(pop_b)
+
+# plot population a & b together
+ggplot() +
+  geom_density(data = df_pop_a, aes(x = pop_a, color = "Pop. A"), linewidth = 1) +
+  geom_density(data = df_pop_b, aes(x = pop_b, color = "Pop. B"), linewidth = 1) +
+  labs(title = "Kernel Density Estimation - Population A & B", 
+       x = "Algal Density (#/m^2)", 
+       y = "Probability") +
+  scale_color_manual(values = c("Pop. A" = "lightgreen", "Pop. B" = "lightblue"))
+```
+
+### Q3: Binomial Distribution
+Suppose in a new survey, at each location, you take 10 random samples and in each sample, you identify whether a particular species of marine algae is present or not. Assume the probability of finding this species in a sample is 0.7 at Location A and 0.5 at Location B.
+
+Simulate this scenario using a binomial distribution, and compare the probability of finding the species in at least 7 out of 10 samples at both locations.
+
+```{r}
+# define experiment parameters
+prob_a = 0.7
+prob_b = 0.5
+n2 = 10
+
+# 7/10 samples found within each population using binomial distribution
+obs_a <- dbinom(7, size = n2, prob = prob_a)
+obs_b <- dbinom(7, size = n2, prob = prob_b)
+
+# round probability
+probability_a <- round(100*obs_a, digits = 1)
+probability_b <- round(100*obs_b, digits = 1)
+```
+
+**The probability of finding 7 out of 10 samples of algae at Population A is `probability_a` = `r probability_a`%, compared to `probability_b` = `r probability_b`% at population B.**
+
+### Q4: Poisson Distribution
+Imagine a scenario where you are studying the occurrences of a particular rare marine event, such as the sighting of a rare marine species, over a set period at a specified location. Assume the average rate of occurrence is 3 per month.
+
+Utilize a Poisson distribution to calculate the probability of observing exactly 5 occurrences in a month, and the probability of observing 3 or fewer occurrences in a month.
+
+```{r}
+# define experiment parameters
+lambda = 3
+x_axis <- 0:10
+
+# define poisson distribution
+p_x <- dpois(x_axis, lambda = lambda)
+
+# visualize poisson distribution to check data
+vis_p_x <- data.frame(observations = x_axis, prob = p_x)
+ggplot(vis_p_x, aes(x = observations, y = prob)) +
+  geom_bar(stat = "identity", fill = "blue", alpha = 0.7) +
+  labs(title = "Probability of Observing Rare Marine Species", 
+       x = "Number of Observations", 
+       y = "Probability") 
+
+# calculate p(5) & p(3 or fewer) using ppois summation function, convert to % and round
+p_5 <- round(100*dpois(5, lambda), digits = 1)
+p_3f <- round(100*ppois(3, lambda), digits = 1)
+```
+
+**The probability of observing 5 occurrences in a month is `p_5` = `r p_5`%**
+**The probability of observing 3 or fewer occurrences in a month is `p_3f` = `r p_3f`%**
+
+### Q5: Consider the following two lists. 
+
+```{r}
+list1 <- c(44.40, 47.70, 65.59, 50.71, 51.29, 67.15, 54.61, 37.35, 43.13, 45.54, 62.24, 53.60, 54.01, 51.11, 44.44, 67.87, 54.98, 30.33, 57.01, 45.27, 39.32, 47.82, 39.74, 42.71, 43.75, 33.13, 58.38, 51.53, 38.62, 62.54, 54.26, 47.05, 58.95, 58.78, 58.22, 56.89, 55.54, 49.38, 46.94, 46.20, 43.05, 47.92, 37.35, 71.69, 62.08, 38.77, 45.97, 45.33, 57.80, 49.17, 52.53, 49.71, 49.57, 63.69, 47.74, 65.16, 34.51, 55.85, 51.24, 52.16, 53.80, 44.98, 46.67, 39.81, 39.28, 53.04, 54.48, 50.53, 59.22, 70.50, 45.09, 26.91, 60.06, 42.91, 43.12, 60.26, 47.15, 37.79, 51.81, 48.61, 50.06, 53.85, 46.29, 56.44, 47.80, 53.32, 60.97, 54.35, 46.74, 61.49, 59.94, 55.48, 52.39, 43.72, 63.61, 44.00, 71.87, 65.33, 47.64, 39.74)
+
+list2 <- c(44.34, 48.85, 41.30, 39.79, 30.73, 44.32, 33.23, 19.98, 39.30, 58.78, 36.37, 54.12, 20.73, 44.17, 52.79, 49.52, 46.59, 35.39, 32.25, 29.64, 46.76, 30.79, 37.64, 41.16, 72.66, 35.22, 48.53, 46.17, 30.57, 43.93, 66.67, 51.77, 45.62, 38.66, 14.20, 61.97, 23.09, 56.10, 73.64, 23.34, 55.53, 41.07, 21.42, 22.28, 20.98, 37.04, 23.07, 55.32, 76.50, 25.69, 56.82, 56.54, 49.98, 29.87, 43.21, 40.79, 53.44, 39.41, 59.65, 39.38, 60.79, 29.26, 26.10, 93.62, 38.75, 49.47, 54.55, 37.74, 52.75, 50.53, 41.77, 45.98, 44.49, 76.93, 33.88, 28.56, 45.57, 49.66, 51.55, 38.12, 29.05, 63.95, 39.76, 32.02, 41.46, 42.04, 61.65, 46.27, 56.31, 37.51, 48.22, 40.13, 46.42, 31.57, 25.34, 74.96, 54.01, 26.23, 35.83, 27.22)
+```
+
+These list were generated using the following code
+
+set.seed(123)  # Setting a seed for reproducibility
+list1 <- round(rnorm(100, mean = 50, sd = 10), 2)  # Generating 100 values from a normal distribution
+list2 <- round(rnorm(100, mean = 45, sd = 15), 2)  # Generating 100 values from another normal distribution
+
+Compare the distributions of these two lists to determine if they originate from the same distribution or from different distributions.
+
+1. Use geom_density to create a density plot for each list on the same graph. Use different colors to distinguish between the two lists:
+```{r}
+# create df to store list 1 & 2 for geom_density function
+df_Q5 <- data.frame(list1= list1, list2 = list2)
+
+# plot list1 & list 2 together
+combo_plot <- ggplot() +
+  geom_density(data = df_Q5, aes(x = list1, color = "List 1"), linewidth = 1) +
+  geom_density(data = df_Q5, aes(x = list2, color = "List 2"), linewidth = 1) +
+  labs(title = "Normal Distribution Density Plot - List 1 & 2", 
+       x = "Randomly Generated Values", 
+       y = "Probability") +
+  scale_color_manual(values = c("List 1" = "maroon", "List 2" = "orange"))
+
+# adding annotations
+combo_plot + 
+  geom_text(aes(x = 66, y = 0.028, label = "μ = 50, σ = 10"), color = "maroon", size = 3) +
+  geom_text(aes(x = 24, y = 0.021, label = "μ = 45, σ = 15"), color = "orange", size = 3)
+```
+
+Examine the plot you have generated. Do you think list1 and list2 come from the same distribution or different distributions? Why?
+Write down your observations and reasoning.
+
+**I believe list1 and list2 were sampled from two different normal distributions. This is apparent from the lines of code provided to us using the rnorm() function to return 100 random values. While there is a substantial effect size between the two distributions, each were calculated using different parameters (i.e. list 1, μ = 50, σ = 10 and list2, μ = 45, σ = 15). When plotted, the two distributions are shaped differently because the area under the curve of list1 is densely centered around a mean of 50 with a narrow variance of 10, while list2 is centered around 45 with a relatively wide variance of 15.** 
