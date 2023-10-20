@@ -1,0 +1,148 @@
+### Practical 5
+
+You are studying a fish phenotypic trait, "T," which you hypothesize is dominant over the alternative phenotype "t." In classical Mendelian genetics, the offspring of two heterozygus parents (Tt) should exhibit the dominant and recessive traits in a 3:1 ratio (three individuals with the dominant phenotype for every one individual with the recessive phenotype).
+
+In a tank containing only heterozygous parents (Tt), you inspect 350 juveniles and observe that 254 display the dominant trait (T) and 96 display the recessive trait (t). You aim to use simulation to test whether there's a statistically significant difference between the observed numbers of dominant and recessive traits (254:96) and what you would expect if the trait T is truly dominant in a 3:1 ratio (approximately 263 dominant: 87 recessive, given the sample size of 350).
+
+In other words, imagine a scenario where you have a large number of jars. Each jar contains an immense quantity of marbles that have an exact 3:1 ratio of black (representing the dominant trait) to white (indicative of the recessive trait) marbles. From each jar, you randomly select a sample of 350 marbles. Under the most typical circumstances, given the 3:1 ratio, you would expect to retrieve approximately 263 black and 87 white marbles from each jar.
+
+What you want to do here is to assess the probability of encountering a deviation from this anticipated outcome — specifically, how plausible it is to draw a sample comprising 254 black and 96 white marbles as was the case in your fish tank?
+
+How plausible it is to draw a distribution that diverges more substantially from the expected ratio, such as 200 black and 150 white marbles, from a jar?
+
+This evaluation helps determine whether the observed variations are within the realm of normal statistical fluctuations or if they signify an unusual event that defies the established 3:1 genetic dominance principle.
+
+Recall that the steps to carry out this analysis are as follows:
+
+1. Compute a test statistic to describe the observed difference between the expected and observed values. Hint: this was covered in the `pdf`
+
+**Null Hypothesis:** Juvenile fish born from a tank of heterozygous parents (Tt) will display the dominant phenotype trait "T" over the recessive phenotype trait "t" in the expected Mendelian (3:1) ratio.
+
+**Hypothesis:** Juvenile fish born from a tank of heterozygous parents (Tt) will **NOT** display the dominant phenotype trait "T" over the recessive phenotype trait "t" in the expected Mendelian (3:1) ratio.
+     
+**Based on the parameters given, the best test statistic to use would be the Chi-squared (χ²) test  because I need to evaluate the relationship between two categorical variables, which are the dominant and recessive traits T and t.**
+
+```{r}
+# write a function to define a simple χ² test
+chi_squared_test <- function(exp_T, exp_t, obs_T, obs_t) {
+  dominant <- ((obs_T - exp_T)^2) / exp_T
+  recessive <- ((obs_t - exp_t)^2) / exp_t
+  return(sum(dominant + recessive))
+}
+
+# test functionality at extremes:
+# if exp_t = 0 and/or exp_T = 0, should return Inf
+exp_T <- 0
+exp_t <- 0
+obs_T <- 254
+obs_t <- 96
+
+test <- chi_squared_test(exp_T, exp_t, obs_T, obs_t)
+print(test)
+
+# if obs_T = exp_T and obs_t = exp_t, should return 0
+exp_T <- 2
+exp_t <- 2
+obs_T <- 2
+obs_t <- 2
+
+test <- chi_squared_test(exp_T, exp_t, obs_T, obs_t)
+print(test)
+
+# should return 1.239019274 with given values
+exp_T <- 263
+exp_t <- 87
+obs_T <- 254
+obs_t <- 96
+
+test <- chi_squared_test(exp_T, exp_t, obs_T, obs_t)
+print(test)
+```
+
+**Now I will use my function to calculate the observed test statistic where expected probability is (263:87), and observed probability is (254:96).**
+```{r}
+# define parameters for (prob_exp = 263:87) vs. (prob_obs1 = 254:96)
+n <- 350
+exp_T <- (3/4)*n
+exp_t <- (1/4)*n
+obs_T <- 254
+obs_t <- 96
+
+# compute χ² test statistic 
+result1 <- chi_squared_test(exp_T, exp_t, obs_T, obs_t)
+print(result1)
+```
+
+**Again, I calculate the observed test statistic where expected probability is (263:87), and observed probability is (200:150).**
+```{r}
+# define parameters for (prob_exp = 263:87) vs. (prob_obs = 200:150)
+n <- 350
+exp_T <- (3/4)*n
+exp_t <- (1/4)*n
+obs_T <- 200
+obs_t <- 150
+
+# compute χ² test statistic 
+result2 <- chi_squared_test(exp_T, exp_t, obs_T, obs_t)
+print(result2)
+```
+**It is highly unlikely one would draw a distribution that diverges as substantially as (200:150).**
+
+
+2. Quantify what is considered a normal sampling variation. In other words, use simulation to determine the occurrences resulting from normal statistical fluctuations. This involves simulating many instances of drawing 350 marbles from jars with a 3:1 ratio and seeing, using the test statistic above, the values that expects due to the randomness inherent to sampling alone.
+
+```{r}
+# make reproducible
+set.seed(1)
+
+# define parameters
+n <- 350
+replicates <- 100000
+prob_ratio <- c(3/4, 1/4)
+exp_T <- (3/4)*n
+exp_t <- (1/4)*n
+
+# generate simulated trial matrix
+# n_replicates should be high enough when histogram reflects smooth 
+# clustering around 87 and 263
+sim_trials <- rmultinom(replicates, n, prob_ratio)
+hist(sim_trials)
+
+# create vector to store the chi-squared test statistics
+sim_chi_squared_test <- numeric(replicates)
+
+# calculate sampling variation using chi-squared test formula over n replicates
+for (i in 1:replicates) {
+  obs_T <- sim_trials[1, i]  
+  obs_t <- sim_trials[2, i] 
+  sim_chi_squared_test[i] <- chi_squared_test(exp_T, exp_t, obs_T, obs_t)
+}
+
+# visualize, results should cluster 0 < χ² < 1.1
+hist(sim_chi_squared_test)
+```
+
+3. Compute an empirical p-value and explain your findings.
+
+```{r}
+# compute mean of simulated chi-squared test values
+mean_sim_chi_squared_test <- mean(sim_chi_squared_test)
+
+# use mean to calculate simulated p-value
+p_value_sim <- 1 - pchisq(mean_sim_chi_squared_test, df=1)
+p_value_sim
+
+# calculate observed p-value
+p_value_obs <- 1 - pchisq(result1, df=1)
+p_value_obs
+
+# calculate empirical p-value
+p_value_emp <- abs(result1 - mean_sim_chi_squared_test)
+p_value_emp
+```
+
+**The calculated p-values for the observed and simulated data exceed the significance threshold of 0.05 so we cannot reject the null hypothesis. Therefore, juvenile fish born from a tank of heterozygous parents (Tt) will display the dominant phenotype trait "T" over the recessive phenotype trait "t" in the expected Mendelian (3:1) ratio.**
+
+
+Note that the approach described above is similar to the methodology discussed during our class exercise. However, unlike the procedure we followed in class, where we employed permutations as part of simulating a t-test-like process, this example doesn't necessitate permutations.
+
